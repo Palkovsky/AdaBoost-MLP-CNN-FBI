@@ -16,15 +16,17 @@
 
 * Zbiór danych
   - FMNIST
-  - obrazki 28x28
-  - 28*28=784 cech
+  - obrazki w rozmiarze 28x28
+  - obrazki w grayscale - jeden bajt -> jeden piskel
+  - 28*28*1=784 cech - jeden piksel -> jedna checha
   - 10 klas
-  - 70 tysięcy próbek.
+  - 70 tysięcy próbek
 
-  #+attr_latex: :width 300px
+  #+attr_latex: :width 200px
   #+Caption: Wizualizacja FMNIST
   [[./images/fmnist.jpg]]
 
+#+LATEX: \newpage
 * Modele
 ** AdaBoost
    - Bazuje na drzewach decyzyjnych
@@ -85,8 +87,8 @@
 #+LATEX: \newpage
 
 * Przebieg eksperymentów
-  Ze zbioru FMNIST wybierana jest pewien procent sampli. 
-  Domyślnie 50%, z wyjątkiem podpunktu ~Jakość w zależności od ilości uczących~, w którym wybierane jest 10%, 30%, 50%, 100%.
+  Ze zbioru FMNIST wybierany jest pewien procent sampli. 
+  Domyślnie 50%, z wyjątkiem podpunktu ~Jakość w zależności od ilości uczących~, w którym wybierane jest 10%, 30%, 50%, 100%(oś X na wykresie).
 
   Wybrany zbiór jest dzielony na zbiory: treningowy i testowy w stosunku 4:1.
   Potem następuje przetwarzanie zbioru treningowego(opcjonalne) np. zaszumianie.
@@ -94,7 +96,7 @@
   Liczone są następujące metryki: ~accuracy~, ~f1 score~, ~log loss~, ~precision~, ~recall~, ~precision-recall auc~, ~roc auc~.
 
 ** Procedura zaszumiania danych treningowych
-   - Jako parametry przyjmuje procent danych treningowych do zaszumienia.
+   - Jako parametr przyjmuje procent danych treningowych do zaszumienia.
    - Wyznacza ilość sampli do zaszumienia. ~ilosc_do_zaszumienia = y_train.length*procent~
    - Dla pierwszych ~ilosc_do_zaszumienia~ elementów w tablicy ~y_train~ ustawiamy element będący wynikiem ~random.choice(classes)~
 
@@ -105,11 +107,11 @@ Warte uwagi jest to, że modele ćwiczone dla dużej ilości danych szkolone by�
 A mimo to najwyższy uzyskany wynik jest lepszy niż przy wydłużonym treningu.
 
 AdaBoost zachowuje się dziwnie, ale może to wynikać ze zbyt małej liczy słabych klasyfikatorów(około 100).
+Zwiększanie liczby tychże klasyfikatorów pozwala na osiągięcie lepszych wyników, ale skutkuje to wydłużonym czasem treningu.
 
 * Jakość klasyfikatorów w zależności od czasu treningu
 Ze względu na to, że sieci trenujemy na karcie graficznej, a AdaBoosta na procesorze nie możemy porównać dokładnie obu metod.
 Wynika to z tego, że jeden model otrzymuje znacznie więcej mocy obliczeniowej w jednostce czasu.
-
 Dlatego dla AdaBoosta mierzymy czas rzeczywisty, a dla sieci liczbę epok.
 
 ** AdaBoost
@@ -125,17 +127,35 @@ Dlatego dla AdaBoosta mierzymy czas rzeczywisty, a dla sieci liczbę epok.
   Jedynym wyjątkiem jest klasyfikator MLP, w którym pojawiają się dziwne fluktuacje dokładności, ale może wynikać to z niestarannie dobranej architektury sieci.
   Finalnie każdy klasyfikator osiąga dokładność 10%, czyli staje się klasyfikatorem losowym [[[fig:4][Rysunek 5]]].
 
+  Cytując z artytkuł ~Learning with Bad Training Data via Iterative Trimmed Loss Minimization~:
+  #+begin_src 
+  Although deep networks have the capacity to fit bad
+  samples as well as the clean samples, as we motivated in
+  Section 1, the learning curve for clean samples is better than
+  that of the bad samples.
+  #+end_src
+
+  Sieci neuronowe są w stanie nauczyć się złych wyników, stąd też wynika pogorszenie wyników na zbiorze testowym.
+  Krzywa AdaBoosta wygląda podobnie, więc powyższe twierdzenie również do niego pasuje.
+
+  Autorzy powyższego artykułu opisują metodę, która pozwala na wytrenowanie modelu mimo zaszumienego zbioru treningowego.
+
 * Wnioski
-  - Porównywanie metod szkolonych na różnych platformach sprzętowych jest trudne.
+  - Porównywanie metod szkolonych na różnych platformach sprzętowych jest trudne i nie pozwala na jednoznaczne stawianie tez odnośnie wyższości jednej metody nad drugą.
   - Sieci neuronowe osiągają znacznie lepsze wyniki od AdaBoosta, ale nie można jednoznacnzie stwierdzić, że to drugie jest gorsze ze względu na nierówności w platformach sprzętowych.
     AdaBoost poprawia się wraz ze zwiększaniem liczby słabych klasyfikatorów w zespole.
-  - Im więcej danych tym model daje lepsze rezultaty.
+  - Im więcej dobrych danych treningowych tym model daje lepsze wyniki na zbiorze testowym.
   - Od pewnego momentu modele osiągają pewną dokładność, gdzie przedłużanie szkolenia nie daje żadnych rezultatów.
     W przypadku modeli o bardzo dużej liczbie parametrów i zbyt długim czasie treningu można doprowadzić do overfittingu.
   - Zwiększanie ilości danych daje lepszy efekt niż zwiększanie długości trenowania.
   - Wszystkie modele reagują podbnie na zaszumienie danych treningowych.
     Wraz ze zwiększaniem ilości niepoprawnych próbek treningowych zmniejsza się dokładność.
+    Dla 100% zaszumienia każdy klasyfikator staje się klasyfikatorem losowym(dokładność 10%).
 
+* Dodatkowe uwagi
+  Istnieje implementacja metody opartej o boostowanie na GPU.
+  Byż może pozwoliłaby ona na danie metodom klasyczynym "uczciwej szansy" w porównaniu z sieciami neuronowymi.
+  [[https://catboost.ai/][Link]]
 
 #+attr_latex: :height 650px
 #+LABEL: fig:3a

@@ -15,7 +15,11 @@
   - Głębokiej sieci neuronowej z warstwami konwolucyjnymi - CNN
 
 * Zbiór danych
-  FMNIST, obrazki 28x28, 10 klas, 70 tysięcy próbek.
+  - FMNIST
+  - obrazki 28x28
+  - 28*28=784 cech
+  - 10 klas
+  - 70 tysięcy próbek.
 
   #+attr_latex: :width 300px
   #+Caption: Wizualizacja FMNIST
@@ -79,6 +83,21 @@
    | Dropout            |         0.4 | -      | -       | -         |
    | Dense              |          10 | -      | -       | Softmax   |
 #+LATEX: \newpage
+
+* Przebieg eksperymentów
+  Ze zbioru FMNIST wybierana jest pewien procent sampli. 
+  Domyślnie 50%, z wyjątkiem podpunktu ~Jakość w zależności od ilości uczących~, w którym wybierane jest 10%, 30%, 50%, 100%.
+
+  Wybrany zbiór jest dzielony na zbiory: treningowy i testowy w stosunku 4:1.
+  Potem następuje przetwarzanie zbioru treningowego(opcjonalne) np. zaszumianie.
+  Następnie model jest trenowany z ustalonymi parametrami za pomocą przetworzonego zbioru treningowego i ewaluowany za pomocą testowego.
+  Liczone są następujące metryki: ~accuracy~, ~f1 score~, ~log loss~, ~precision~, ~recall~, ~precision-recall auc~, ~roc auc~.
+
+** Procedura zaszumiania danych treningowych
+   - Jako parametry przyjmuje procent danych treningowych do zaszumienia.
+   - Wyznacza ilość sampli do zaszumienia. ~ilosc_do_zaszumienia = y_train.length*procent~
+   - Dla pierwszych ~ilosc_do_zaszumienia~ elementów w tablicy ~y_train~ ustawiamy element będący wynikiem ~random.choice(classes)~
+
 * Jakość w zależności od ilości uczących
 W ogólności im więcej danych tym lepsze wyniki [[[fig:3a][Rysunek 2]]].
 
@@ -94,8 +113,8 @@ Wynika to z tego, że jeden model otrzymuje znacznie więcej mocy obliczeniowej 
 Dlatego dla AdaBoosta mierzymy czas rzeczywisty, a dla sieci liczbę epok.
 
 ** AdaBoost
-   Czas treningu jest zwiększany poprzez dodowanie kolejnych klasyfikatorów do boostowania.
-   Model wykazuje poprawę metryk wraz z czasem, ale widać tendencję do spłaszczania się z czasem [[[fig:3b_ada][Rysunek 4]]]
+   Czas treningu jest zwiększany poprzez dodowanie kolejnych klasyfikatorów w grupie.
+   Model wykazuje poprawę metryk wraz z czasem, ale widać tendencję do spłaszczania się [[[fig:3b_ada][Rysunek 4]]]
 
 ** Sieci neuronowe
    Sieci neuronowe także wydają się osiągać szczyt swoich możliwości od pewnej liczby epok.
@@ -108,13 +127,15 @@ Dlatego dla AdaBoosta mierzymy czas rzeczywisty, a dla sieci liczbę epok.
 
 * Wnioski
   - Porównywanie metod szkolonych na różnych platformach sprzętowych jest trudne.
-  - Sieci neuronowe osiągają znacznie lepsze wyniki od AdaBoosta, ale nie można jednoznacnzie stwierdzić, że to drugie jest gorsze. 
-    Ponieważ AdaBoosta można próbować poprawić na przykład przez zwiększenie skomplikowania klasyfikatorów bazowych.
+  - Sieci neuronowe osiągają znacznie lepsze wyniki od AdaBoosta, ale nie można jednoznacnzie stwierdzić, że to drugie jest gorsze ze względu na nierówności w platformach sprzętowych.
+    AdaBoost poprawia się wraz ze zwiększaniem liczby słabych klasyfikatorów w zespole.
   - Im więcej danych tym model daje lepsze rezultaty.
   - Od pewnego momentu modele osiągają pewną dokładność, gdzie przedłużanie szkolenia nie daje żadnych rezultatów.
     W przypadku modeli o bardzo dużej liczbie parametrów i zbyt długim czasie treningu można doprowadzić do overfittingu.
   - Zwiększanie ilości danych daje lepszy efekt niż zwiększanie długości trenowania.
   - Wszystkie modele reagują podbnie na zaszumienie danych treningowych.
+    Wraz ze zwiększaniem ilości niepoprawnych próbek treningowych zmniejsza się dokładność.
+
 
 #+attr_latex: :height 650px
 #+LABEL: fig:3a

@@ -1,0 +1,137 @@
+#+TITLE: Podstawy uczenia maszynowego - Projekt 5
+#+SUBTITLE: Damian Wasilenko, Dawid Macek; pn. 14:40, B
+#+LANGUAGE: pl
+#+LATEX_HEADER: \usepackage[AUTO]{babel}
+#+LATEX_HEADER: \usepackage{geometry}
+#+LATEX_HEADER: \geometry{left=0.6in,right=0.6in,top=0.8in,bottom=0.8in}
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: html-postamble:nil
+
+* Cel projektu
+  Celem projektu jest porównanie trzech klasyfikatorów:
+  - AdaBoost bazującego na drzewach decyzjnych
+  - Głębokiej sieci neuronowej bez warstw konwolucyjnych - MLP
+  - Głębokiej sieci neuronowej z warstwami konwolucyjnymi - CNN
+
+* Zbiór danych
+  FMNIST, obrazki 28x28, 10 klas, 70 tysięcy próbek.
+
+  #+attr_latex: :width 300px
+  #+Caption: Wizualizacja FMNIST
+  [[./images/fmnist.jpg]]
+
+* Modele
+** AdaBoost
+   - Bazuje na drzewach decyzyjnych
+   - Przyjęliśmy głębokość drzewa równą 10
+
+** Multi Layer Perceptron - bez konwolucji
+   - Około 300 tysięcy parametrów
+   - Funkcja strat: *binary crossentropy*
+   - Metryka: *accuracy*
+   - Optimizer: *Adam*
+
+   #+CAPTION: Architektura MLP
+   | Typ     | Parametr | Aktywacja |
+   |---------+----------+-----------|
+   | Wejśce  |    28*28 | -         |
+   | Dense   |       64 | Relu      |
+   | Dropout |      0.2 | -         |
+   | Dense   |      128 | Relu      |
+   | Dropout |      0.2 | -         |
+   | Dense   |      256 | Relu      |
+   | Dropout |      0.2 | -         |
+   | Dense   |      512 | Relu      |
+   | Dropout |      0.2 | -         |
+   | Dense   |      256 | Relu      |
+   | Dropout |      0.2 | -         |
+   | Wyjście |       10 | Softmax   |
+   
+#+LATEX: \newpage
+** Convolutional Neural Network
+   - Około 300 tysięcy parametrów
+   - Funkcja strat: *binary crossentropy*
+   - Metryka: *accuracy*
+   - Optimizer: *Adam*
+
+   #+CAPTION: Architektura CNN
+   | Typ                |        Opis | Kernel | Strides | Aktywacja |
+   |--------------------+-------------+--------+---------+-----------|
+   | Wejście            | (28, 28, 1) | -      | -       | -         |
+   | Conv2D             |          32 | (3, 3) | (1, 1)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Conv2D             |          32 | (3, 3) | (1, 1)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Conv2D             |          32 | (5, 5) | (2, 2)  | -         |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Dropout            |         0.4 | -      | -       | -         |
+   | Conv2D             |          64 | (3, 3) | (1, 1)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Conv2D             |          64 | (3, 3) | (1, 1)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Conv2D             |          64 | (5, 5) | (2, 2)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Dropout            |         0.4 | -      | -       | -         |
+   | Conv2D             |         128 | (4, 4) | (1, 1)  | Relu      |
+   | BatchNormalization |           - | -      | -       | -         |
+   | Flatten            |           - | -      | -       | -         |
+   | Dropout            |         0.4 | -      | -       | -         |
+   | Dense              |          10 | -      | -       | Softmax   |
+#+LATEX: \newpage
+* Jakość w zależności od ilości uczących
+W ogólności im więcej danych tym lepsze wyniki [[[fig:3a][Rysunek 2]]].
+
+Warte uwagi jest to, że modele ćwiczone dla dużej ilości danych szkolone były krócej(około 10 epok dla sieci) niż w kolejnym zadaniu.
+A mimo to najwyższy uzyskany wynik jest lepszy niż przy wydłużonym treningu.
+
+AdaBoost zachowuje się dziwnie, ale może to wynikać ze zbyt małej liczy słabych klasyfikatorów(około 100).
+
+* Jakość klasyfikatorów w zależności od czasu treningu
+Ze względu na to, że sieci trenujemy na karcie graficznej, a AdaBoosta na procesorze nie możemy porównać dokładnie obu metod.
+Wynika to z tego, że jeden model otrzymuje znacznie więcej mocy obliczeniowej w jednostce czasu.
+
+Dlatego dla AdaBoosta mierzymy czas rzeczywisty, a dla sieci liczbę epok.
+
+** AdaBoost
+   Czas treningu jest zwiększany poprzez dodowanie kolejnych klasyfikatorów do boostowania.
+   Model wykazuje poprawę metryk wraz z czasem, ale widać tendencję do spłaszczania się z czasem [[[fig:3b_ada][Rysunek 4]]]
+
+** Sieci neuronowe
+   Sieci neuronowe także wydają się osiągać szczyt swoich możliwości od pewnej liczby epok.
+   Z tym, że ten szczyt jest znacznie wyżej niż dla AdaBoosta [[[fig:3b][Rysunek 3]]].
+
+* Ocena mocy klasyfikatorów
+  Wszystkie klasyfikatory tracą dokładność wraz ze zwiększaniem zaszumienia danych treningowych.
+  Jedynym wyjątkiem jest klasyfikator MLP, w którym pojawiają się dziwne fluktuacje dokładności, ale może wynikać to z niestarannie dobranej architektury sieci.
+  Finalnie każdy klasyfikator osiąga dokładność 10%, czyli staje się klasyfikatorem losowym [[[fig:4][Rysunek 5]]].
+
+* Wnioski
+  - Porównywanie metod szkolonych na różnych platformach sprzętowych jest trudne.
+  - Sieci neuronowe osiągają znacznie lepsze wyniki od AdaBoosta, ale nie można jednoznacnzie stwierdzić, że to drugie jest gorsze. 
+    Ponieważ AdaBoosta można próbować poprawić na przykład przez zwiększenie skomplikowania klasyfikatorów bazowych.
+  - Im więcej danych tym model daje lepsze rezultaty.
+  - Od pewnego momentu modele osiągają pewną dokładność, gdzie przedłużanie szkolenia nie daje żadnych rezultatów.
+    W przypadku modeli o bardzo dużej liczbie parametrów i zbyt długim czasie treningu można doprowadzić do overfittingu.
+  - Zwiększanie ilości danych daje lepszy efekt niż zwiększanie długości trenowania.
+  - Wszystkie modele reagują podbnie na zaszumienie danych treningowych.
+
+#+attr_latex: :height 650px
+#+LABEL: fig:3a
+#+CAPTION: Miary jakości klasyfikatorów w zależności od ilości przykładów uczących.
+[[./plots/3a.png]]
+
+#+attr_latex: :height 650px
+#+LABEL: fig:3b
+#+CAPTION: Miary jakości sieci w zależności od ilości epok
+[[./plots/3b.png]]
+
+#+attr_latex: :height 650px
+#+LABEL: fig:3b_ada
+#+CAPTION: Miary jakości AdaBoosta w zależności od czasu treningu.
+[[./plots/3b_ada.png]]
+
+#+attr_latex: :height 650px
+#+LABEL: fig:4
+#+CAPTION: Miary jakości klasyfikatorów ze względu na stopień zaszumienia danych treningowych.
+[[./plots/4.png]]
